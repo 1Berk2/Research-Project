@@ -214,7 +214,7 @@ def fetch_sp_returns(start_year: int, end_year: int, db_sp_returns: str, freq: s
 
     return formatted_data
 
-def fetch_accounting_data(column_name: str, db_accounting: str, start_date: str, end_date: str) -> pd.DataFrame:
+def fetch_accounting_data(column_name: str, db_accounting: str, year: int) -> pd.DataFrame:
     """
     Get the accounting data for a given stock.
 
@@ -229,13 +229,15 @@ def fetch_accounting_data(column_name: str, db_accounting: str, start_date: str,
     """
     query = f"""
         SELECT
-            DATADATE,
+            FYEARQ,
             numid,
             {column_name}
         FROM
             {DB_READ}.{db_accounting}
         WHERE
-            DATADATE BETWEEN '{start_date}' AND '{end_date}'
+            FYEARQ = {year}
+        AND
+            FQTR = 4
     """
     data = fetch_data(query)
     formatted_data = from_sql_accounting_data(data)

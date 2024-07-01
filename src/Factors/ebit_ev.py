@@ -31,13 +31,14 @@ def ebit_ev_factor(start_date: str, end_date: str) -> pd.DataFrame:
     returns_df = fetch_stock_ret_pct(start_date, end_date, db_returns)
     returns_df = returns_df.dropna(thresh=200, axis=1)
     numids = returns_df.columns.tolist()
+    year_end = end_date.split('-')[0]
 
-    ebit = fetch_accounting_data(df_name_col_map['ebit'], db_accounting, start_date, end_date)
-    num_shares = fetch_accounting_data(df_name_col_map['num_shares'], db_accounting, start_date, end_date)
-    current_liabilities = fetch_accounting_data(df_name_col_map['current_liabilities'], db_accounting, start_date, end_date)
-    long_term_debt = fetch_accounting_data(df_name_col_map['long_term_debt'], db_accounting, start_date, end_date)
-    preferred_stock = fetch_accounting_data(df_name_col_map['preferred_stock'], db_accounting, start_date, end_date)
-    cash_and_cash_equivalents = fetch_accounting_data(df_name_col_map['cash_and_cash_equivalents'], db_accounting, start_date, end_date)
+    ebit = fetch_accounting_data(df_name_col_map['ebit'], db_accounting, year_end)
+    num_shares = fetch_accounting_data(df_name_col_map['num_shares'], db_accounting, year_end)
+    current_liabilities = fetch_accounting_data(df_name_col_map['current_liabilities'], db_accounting, year_end)
+    long_term_debt = fetch_accounting_data(df_name_col_map['long_term_debt'], db_accounting, year_end)
+    preferred_stock = fetch_accounting_data(df_name_col_map['preferred_stock'], db_accounting, year_end)
+    cash_and_cash_equivalents = fetch_accounting_data(df_name_col_map['cash_and_cash_equivalents'], db_accounting, year_end)
     market_price = fetch_market_price(db_price, start_date, end_date)
 
     # Ensure valid numids
@@ -70,16 +71,20 @@ def ebit_ev_factor(start_date: str, end_date: str) -> pd.DataFrame:
             num_shares_value = num_shares_data.values[0]
             market_price_value = market_price_data.values[0]
 
-            current_liabilities_value = current_liabilities_data.values[0] if not current_liabilities_data.empty else 0
-            long_term_debt_value = long_term_debt_data.values[0] if not long_term_debt_data.empty else 0
+            current_liabilities_value = current_liabilities_data.values[0]
+            long_term_debt_value = long_term_debt_data.values[0]
             preferred_stock_value = preferred_stock_data.values[0] if not preferred_stock_data.empty else 0
-            cash_and_cash_equivalents_value = cash_and_cash_equivalents_data.values[0] if not cash_and_cash_equivalents_data.empty else 0
+            cash_and_cash_equivalents_value = cash_and_cash_equivalents_data.values[0]
 
             if returns_data.empty:
                 ebit_evs.append({'numid': numid, 'factor': None})
                 continue
 
             # Calculate Enterprise Value (EV)
+            if num_shares_value == 0 or market_price_value == 0:
+                ebit_evs.append({'numid': numid, 'factor': None})
+                continue
+
             enterprise_value = (market_price_value * num_shares_value + current_liabilities_value + 
                                 long_term_debt_value + preferred_stock_value - cash_and_cash_equivalents_value)
             
@@ -98,8 +103,5 @@ def ebit_ev_factor(start_date: str, end_date: str) -> pd.DataFrame:
 
     ebit_ev_df = pd.DataFrame(ebit_evs)
     ebit_ev_df.dropna(subset=['factor'], inplace=True)  # Ensure no NaN values in the 'factor' column
-
-    # Filter out extreme outliers
-    ebit_ev_df = ebit_ev_df[(ebit_ev_df['factor'] >= 0.00) & (ebit_ev_df['factor'] <= 0.60)]
 
     return ebit_ev_df
