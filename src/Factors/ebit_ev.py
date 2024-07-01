@@ -79,39 +79,27 @@ def ebit_ev_factor(start_date: str, end_date: str) -> pd.DataFrame:
                 ebit_evs.append({'numid': numid, 'factor': None})
                 continue
 
-            # Calculate Enterprise Value (EV) and EV/EBIT ratio
+            # Calculate Enterprise Value (EV)
             enterprise_value = (market_price_value * num_shares_value + current_liabilities_value + 
                                 long_term_debt_value + preferred_stock_value - cash_and_cash_equivalents_value)
             
-            if ebit_value == 0:
+            if enterprise_value == 0 or ebit_value == 0:
                 ev_ebit = None  # Avoid division by zero
             else:
-                ev_ebit = enterprise_value / ebit_value
+                ev_ebit = ebit_value / enterprise_value
 
             if pd.isna(ev_ebit) or np.isinf(ev_ebit):
                 ev_ebit = None
 
             ebit_evs.append({'numid': numid, 'factor': ev_ebit})
-
-            if ev_ebit > 1000 or ev_ebit < -1000:
-                print('-'*50)
-            # print all variables that came into the calculation fo this value
-            print(f"numid: {numid}")
-            print(f"ebit_value: {ebit_value}")
-            print(f"num_shares_value: {num_shares_value}")
-            print(f"market_price_value: {market_price_value}")
-            print(f"current_liabilities_value: {current_liabilities_value}")
-            print(f"long_term_debt_value: {long_term_debt_value}")
-            print(f"preferred_stock_value: {preferred_stock_value}")
-            print(f"cash_and_cash_equivalents_value: {cash_and_cash_equivalents_value}")
-            print(f"enterprise_value: {enterprise_value}")
-            print(f"ev_ebit: {ev_ebit}")
-
         
         except Exception:
             ebit_evs.append({'numid': numid, 'factor': None})
 
     ebit_ev_df = pd.DataFrame(ebit_evs)
     ebit_ev_df.dropna(subset=['factor'], inplace=True)  # Ensure no NaN values in the 'factor' column
+
+    # Filter out extreme outliers
+    ebit_ev_df = ebit_ev_df[(ebit_ev_df['factor'] >= 0.00) & (ebit_ev_df['factor'] <= 0.60)]
 
     return ebit_ev_df
