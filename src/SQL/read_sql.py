@@ -18,7 +18,7 @@ def fetch_first_date_year(year: int, db: str) -> str:
         SELECT
             MIN(date) AS start_date
         FROM
-            s4a_data.{db}
+            {DB_READ}.{db}
         WHERE
             YEAR(date) = {year}
     """
@@ -43,7 +43,7 @@ def fetch_numids_jan(first_date: str, db: str) -> list:
         SELECT
             DISTINCT numid
         FROM
-            s4a_data.{db}
+            {DB_READ}.{db}
         WHERE
             date = '{first_date}'
     """
@@ -72,7 +72,7 @@ def fetch_stock_ret_index(stocks: list, start_date: str, end_date: str, db: str)
             numid,
             RI
         FROM
-            s4a_data.{db}
+            {DB_READ}.{db}
         WHERE
             numid IN ({stocks_sql_format})
             AND date BETWEEN '{start_date}' AND '{end_date}'
@@ -100,7 +100,7 @@ def fetch_stock_ret_pct(start_date: str, end_date: str, db: str) -> pd.DataFrame
             numid,
             pct_ret
         FROM
-            s4a_data_intern.{db}
+            {DB_WRITE}.{db}
         WHERE
             date BETWEEN '{start_date}' AND '{end_date}'
     """
@@ -126,7 +126,7 @@ def fetch_factor_values(year: int, db_factor: str) -> pd.DataFrame:
             numid,
             factor
         FROM
-            s4a_data_intern.{db_factor}
+            {DB_WRITE}.{db_factor}
         WHERE
             year = {year}
     """
@@ -152,7 +152,7 @@ def fetch_deciles(year: int, db_deciles: str) -> pd.DataFrame:
             numid,
             decile
         FROM
-            s4a_data_intern.{db_deciles}
+            {DB_WRITE}.{db_deciles}
         WHERE
             year = {year}
     """
@@ -179,7 +179,7 @@ def fetch_decile_returns(start_year: int, end_year: int, db_decile_returns: str,
             decile,
             pct_ret
         FROM
-            s4a_data_intern.{db_decile_returns}
+            {DB_WRITE}.{db_decile_returns}
         WHERE
             year(date) BETWEEN {start_year} AND {end_year}
     """
@@ -205,7 +205,7 @@ def fetch_sp_returns(start_year: int, end_year: int, db_sp_returns: str, freq: s
             date,
             SPCOMPRI_RET
         FROM
-            s4a_data.{db_sp_returns}
+            {DB_READ}.{db_sp_returns}
         WHERE
             year(date) BETWEEN {start_year} AND {end_year}
     """
@@ -233,7 +233,7 @@ def fetch_accounting_data(column_name: str, db_accounting: str, start_date: str,
             numid,
             {column_name}
         FROM
-            s4a_data.{db_accounting}
+            {DB_READ}.{db_accounting}
         WHERE
             DATADATE BETWEEN '{start_date}' AND '{end_date}'
     """
@@ -260,7 +260,7 @@ def fetch_market_price(db_returns: str, start_date: str, end_date: str) -> pd.Da
             numid,
             UP
         FROM
-            s4a_data.{db_returns}
+            {DB_READ}.{db_returns}
         WHERE
             date BETWEEN '{start_date}' AND '{end_date}'
     """
